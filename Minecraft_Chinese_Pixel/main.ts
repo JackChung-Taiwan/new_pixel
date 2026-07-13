@@ -1,6 +1,6 @@
 /**
  * Minecraft Education 中文像素字擴充功能
- * 32×32 中文像素字。固定使用雙格筆劃，橫式文字由左到右排列，文字不鏡像。
+ * 32×32 中文像素字。固定使用雙格筆劃，不提供字型選擇，橫式文字由左到右。
  */
 
 enum ChinesePixelColor {
@@ -46,7 +46,7 @@ namespace chinesePixel {
     const DEFAULT_LINE_SPACING = 4;
 
     /**
-     * 畫出 32×32 中文像素字。橫式文字會由左到右排列，單字本身不會鏡像。
+     * 畫出 32×32 中文像素字。每個筆劃固定使用雙格方塊，橫式文字由左到右。
      * @param text 要建造的文字，例如：你好麥塊
      * @param position 整段文字左下角的起始位置
      * @param direction 文字面向的方向
@@ -78,7 +78,7 @@ namespace chinesePixel {
     }
 
     /**
-     * 畫出 32×32 直排中文像素字。每個字由上到下排列，單字本身不會鏡像。
+     * 畫出 32×32 直排中文像素字。每個筆劃固定使用雙格方塊。
      */
     //% blockId=minecraft_chinese_pixel_draw_vertical_text
     //% block="畫出32×32直排中文 $text|在 $position|朝向 $direction|顏色 $color|放大 $scale 倍|字距 $spacing"
@@ -137,9 +137,8 @@ namespace chinesePixel {
             const line = lines[lineIndex];
             const baseY = (lines.length - lineIndex - 1) * (GLYPH_SIZE + DEFAULT_LINE_SPACING) * scale;
             for (let characterIndex = 0; characterIndex < line.length; characterIndex++) {
-                // Minecraft 牆面水平軸和字形座標相反；字形已翻回正常閱讀，因此橫式字序要反向放置，畫面上才會由左到右。
-                const visualIndex = line.length - characterIndex - 1;
-                const baseX = visualIndex * (GLYPH_SIZE + spacing) * scale;
+                // 橫式文字依輸入順序排列：第一個字在左邊，後面往右延伸。
+                const baseX = characterIndex * (GLYPH_SIZE + spacing) * scale;
                 drawGlyph(line.charAt(characterIndex), origin, direction, block, baseX, baseY, scale);
             }
         }
@@ -168,7 +167,7 @@ namespace chinesePixel {
                 const runEnd = sourceX - 1;
 
                 // 32×32：每個 16×16 原始像素放大成 2×2 方塊。
-                // 不鏡像：將單字 X 軸翻回正常閱讀方向。
+                // 單字本身維持正常閱讀方向，不做左右鏡像。
                 const x0 = baseX + ((SOURCE_GLYPH_SIZE - 1 - runEnd) * 2) * scale;
                 const x1 = baseX + (((SOURCE_GLYPH_SIZE - 1 - runStart) * 2) + 1) * scale + (scale - 1);
                 const y0 = baseY + ((SOURCE_GLYPH_SIZE - 1 - sourceY) * 2) * scale;
