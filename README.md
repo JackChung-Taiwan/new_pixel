@@ -12,15 +12,15 @@ https://github.com/JackChung-Taiwan/new_pixel
 
 不要貼 `/tree/main/Minecraft_Chinese_Pixel` 資料夾網址，MakeCode 擴充功能需要讀取儲存庫根目錄的 `pxt.json`。
 
-## 目前版本：v0.2.1
+## 目前版本：v0.2.2
 
-此版本回到原本精簡方向，只保留中文像素字主功能，並加入指定的第 4、6、7 項：
+此版本回到精簡方向，只保留中文像素字主功能，並加入指定的第 4、6、7 項：
 
 4. 直排中文
-6. 生成速度優化：相同顏色與材質的像素會自動合併成矩形，再用 `blocks.fill` 建造
-7. 字型風格：標準、粗體、細體、空心
+6. 生成速度優化：相同顏色的像素會自動合併成矩形，再用 `blocks.fill` 建造
+7. 字型風格：標準清楚、粗體清楚、細體
 
-已移除上一版的清除區域、中文看板、發光中文、彩虹中文與課堂快速看板功能。
+已移除「空心」字型。預設「畫出中文」會使用粗體清楚版本，遠距離比較容易閱讀。
 
 ## 積木功能
 
@@ -35,13 +35,13 @@ https://github.com/JackChung-Taiwan/new_pixel
 字型積木：
 
 ```text
-畫出中文 [翊華教育] 在 [位置] 朝向 [方向] 顏色 [顏色] 字型 [粗體] 放大 [倍率] 倍 字距 [字距]
+畫出中文 [翊華教育] 在 [位置] 朝向 [方向] 顏色 [顏色] 字型 [粗體清楚] 放大 [倍率] 倍 字距 [字距]
 ```
 
 直排積木：
 
 ```text
-畫出直排中文 [翊華教育] 在 [位置] 朝向 [方向] 顏色 [顏色] 字型 [粗體] 放大 [倍率] 倍 字距 [字距]
+畫出直排中文 [翊華教育] 在 [位置] 朝向 [方向] 顏色 [顏色] 字型 [粗體清楚] 放大 [倍率] 倍 字距 [字距]
 ```
 
 ## JavaScript 範例
@@ -58,6 +58,18 @@ player.onChat("中文", function () {
     )
 })
 
+player.onChat("字型", function () {
+    chinesePixel.drawTextWithFont(
+        "翊華教育",
+        pos(0, 1, 5),
+        EAST,
+        ChinesePixelColor.Black,
+        ChinesePixelFont.Bold,
+        1,
+        1
+    )
+})
+
 player.onChat("直排", function () {
     chinesePixel.drawVerticalText(
         "翊華教育",
@@ -69,26 +81,14 @@ player.onChat("直排", function () {
         1
     )
 })
-
-player.onChat("字型", function () {
-    chinesePixel.drawTextWithFont(
-        "程式設計",
-        pos(0, 1, 5),
-        EAST,
-        ChinesePixelColor.Red,
-        ChinesePixelFont.Outline,
-        1,
-        1
-    )
-})
 ```
 
 回到 Minecraft 後，按 `T` 輸入：
 
 ```text
 中文
-直排
 字型
+直排
 ```
 
 ## 參數
@@ -99,7 +99,7 @@ player.onChat("字型", function () {
 - 顏色：15 種混凝土顏色
 - 放大：1～4 倍
 - 字距：0～4
-- 字型：標準、粗體、細體、空心
+- 字型：標準清楚、粗體清楚、細體
 
 ## 檔案結構
 
