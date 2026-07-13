@@ -1,6 +1,6 @@
 # Minecraft Education 中文像素字
 
-這是一個 Minecraft Education MakeCode 自訂積木擴充功能，可直接輸入繁體中文，並在世界中建造成 16×16 像素方塊字。
+這是 Minecraft Education MakeCode 自訂積木擴充功能，可直接輸入繁體中文，並在世界中建造成 16×16 像素方塊字。
 
 ## 正確安裝網址
 
@@ -12,94 +12,71 @@ https://github.com/JackChung-Taiwan/new_pixel
 
 不要貼 `/tree/main/Minecraft_Chinese_Pixel` 資料夾網址，MakeCode 擴充功能需要讀取儲存庫根目錄的 `pxt.json`。
 
-## 目前版本：v0.2.3
+## v0.3.0 細版字體
 
-此版本回到精簡方向，只保留中文像素字主功能，並加入指定的第 4、6、7 項：
+此版本改成細版中文字：
 
-4. 直排中文
-6. 生成速度優化：相同顏色的像素會自動合併成矩形，再用 `blocks.fill` 建造
-7. 字型風格：單格細字、單格標準、單格清楚
-
-已移除「空心」字型，也不再將筆畫加粗成兩格。預設「畫出中文」會使用單格細字，並透過細化演算法讓每一個筆劃盡量只用一格方塊，避免中文字重疊或模糊。
+1. 字庫改用 Noto Sans CJK TC Regular。
+2. 字庫縮圖改成 14×14，筆劃更有留白。
+3. 預設 `畫出中文` 使用「細字」。
+4. 所有模式都不再自動整體加粗。
+5. 「清楚最多兩格」會補強筆劃，但限制筆劃最多兩格寬。
+6. 保留直排中文與矩形合併加速。
 
 ## 積木功能
-
-安裝後左側會出現「中文像素字」分類。
-
-主要積木：
 
 ```text
 畫出中文 [你好麥塊] 在 [位置] 朝向 [方向] 顏色 [顏色] 放大 [倍率] 倍 字距 [字距]
 ```
 
-字型積木：
-
 ```text
-畫出中文 [翊華教育] 在 [位置] 朝向 [方向] 顏色 [顏色] 字型 [單格細字] 放大 [倍率] 倍 字距 [字距]
+畫出中文 [翊華教育] 在 [位置] 朝向 [方向] 顏色 [顏色] 字型 [細字] 放大 [倍率] 倍 字距 [字距]
 ```
 
-直排積木：
-
 ```text
-畫出直排中文 [翊華教育] 在 [位置] 朝向 [方向] 顏色 [顏色] 字型 [單格細字] 放大 [倍率] 倍 字距 [字距]
+畫出直排中文 [翊華教育] 在 [位置] 朝向 [方向] 顏色 [顏色] 字型 [細字] 放大 [倍率] 倍 字距 [字距]
 ```
+
+## 字型
+
+- 細字：最細，筆劃盡量一格寬。
+- 標準：細字基礎上修補小斷點。
+- 清楚最多兩格：局部補強，但限制筆劃最多兩格寬。
 
 ## JavaScript 範例
 
 ```typescript
 player.onChat("中文", function () {
     chinesePixel.drawText(
-        "你好麥塊",
+        "台北市",
         pos(0, 1, 5),
         EAST,
         ChinesePixelColor.Blue,
         1,
-        1
+        2
     )
 })
+```
 
+```typescript
 player.onChat("字型", function () {
     chinesePixel.drawTextWithFont(
         "翊華教育",
         pos(0, 1, 5),
         EAST,
         ChinesePixelColor.Black,
-        ChinesePixelFont.Thin,
+        ChinesePixelFont.Clear,
         1,
-        1
-    )
-})
-
-player.onChat("直排", function () {
-    chinesePixel.drawVerticalText(
-        "翊華教育",
-        pos(0, 1, 5),
-        EAST,
-        ChinesePixelColor.Black,
-        ChinesePixelFont.Thin,
-        1,
-        1
+        2
     )
 })
 ```
 
-回到 Minecraft 後，按 `T` 輸入：
+## 建議
 
-```text
-中文
-字型
-直排
-```
-
-## 參數
-
-- 文字：直接輸入繁體中文、英文、數字與標點
-- 位置：整段文字左下角起始位置
-- 朝向：NORTH、EAST、SOUTH、WEST
-- 顏色：15 種混凝土顏色
-- 放大：1～4 倍
-- 字距：0～4
-- 字型：單格細字、單格標準、單格清楚
+- `scale` 建議先用 1。
+- `spacing` 建議用 2，中文字比較不會黏在一起。
+- 想接近範例圖片風格，建議使用「細字」或「清楚最多兩格」。
 
 ## 檔案結構
 
