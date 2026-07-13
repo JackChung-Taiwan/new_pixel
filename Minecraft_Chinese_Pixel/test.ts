@@ -15,7 +15,7 @@ player.onChat("字型", function () {
         pos(0, 1, 5),
         EAST,
         ChinesePixelColor.Black,
-        ChinesePixelFont.Clear,
+        ChinesePixelFont.Bold,
         1,
         2
     )
