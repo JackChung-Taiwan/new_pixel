@@ -1,11 +1,11 @@
 player.onChat("中文", function () {
     chinesePixel.drawText(
-        "你好麥塊",
+        "台北市",
         pos(0, 1, 5),
         EAST,
         ChinesePixelColor.Blue,
         1,
-        1
+        2
     )
 })
 
@@ -15,9 +15,9 @@ player.onChat("字型", function () {
         pos(0, 1, 5),
         EAST,
         ChinesePixelColor.Black,
-        ChinesePixelFont.Thin,
+        ChinesePixelFont.Clear,
         1,
-        1
+        2
     )
 })
 
@@ -29,6 +29,6 @@ player.onChat("直排", function () {
         ChinesePixelColor.Black,
         ChinesePixelFont.Thin,
         1,
-        1
+        2
     )
 })
