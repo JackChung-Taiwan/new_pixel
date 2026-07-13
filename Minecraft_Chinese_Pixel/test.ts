@@ -9,25 +9,12 @@ player.onChat("中文", function () {
     )
 })
 
-player.onChat("字型", function () {
-    chinesePixel.drawTextWithFont(
-        "翊華教育",
-        pos(0, 1, 5),
-        EAST,
-        ChinesePixelColor.Black,
-        ChinesePixelFont.Bold,
-        1,
-        2
-    )
-})
-
 player.onChat("直排", function () {
     chinesePixel.drawVerticalText(
         "翊華教育",
         pos(0, 1, 5),
         EAST,
         ChinesePixelColor.Black,
-        ChinesePixelFont.Thin,
         1,
         2
     )
