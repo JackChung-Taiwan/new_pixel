@@ -15,7 +15,7 @@ player.onChat("字型", function () {
         pos(0, 1, 5),
         EAST,
         ChinesePixelColor.Black,
-        ChinesePixelFont.Bold,
+        ChinesePixelFont.Thin,
         1,
         1
     )
@@ -27,7 +27,7 @@ player.onChat("直排", function () {
         pos(0, 1, 5),
         EAST,
         ChinesePixelColor.Black,
-        ChinesePixelFont.Bold,
+        ChinesePixelFont.Thin,
         1,
         1
     )
