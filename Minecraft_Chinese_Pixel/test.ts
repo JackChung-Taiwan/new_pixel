@@ -5,7 +5,7 @@ player.onChat("中文", function () {
         EAST,
         ChinesePixelColor.Blue,
         1,
-        2
+        4
     )
 })
 
@@ -16,6 +16,6 @@ player.onChat("直排", function () {
         EAST,
         ChinesePixelColor.Black,
         1,
-        2
+        4
     )
 })
