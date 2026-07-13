@@ -1,6 +1,6 @@
 /**
  * Minecraft Education 中文像素字擴充功能
- * 16×16 細版中文字。修正牆面生成時左右鏡像問題。
+ * 16×16 中文像素字。固定使用雙格筆劃，不提供字型選擇，避免學生操作混淆。
  */
 
 enum ChinesePixelColor {
@@ -36,15 +36,6 @@ enum ChinesePixelColor {
     Black = 14
 }
 
-enum ChinesePixelFont {
-    //% block="細字"
-    Thin = 0,
-    //% block="標準"
-    Normal = 1,
-    //% block="清楚最多兩格"
-    Clear = 2
-}
-
 //% block="中文像素字"
 //% color="#1565C0"
 //% icon="\uf031"
@@ -54,7 +45,7 @@ namespace chinesePixel {
     const DEFAULT_LINE_SPACING = 2;
 
     /**
-     * 畫出中文像素字。預設使用細字，並已修正左右鏡像問題。
+     * 畫出中文像素字。每一個筆劃固定使用雙格方塊，避免太細斷裂，也不會提供字型選擇。
      * @param text 要建造的文字，例如：你好麥塊
      * @param position 整段文字左下角的起始位置
      * @param direction 文字面向的方向
@@ -79,48 +70,23 @@ namespace chinesePixel {
         scale: number = 1,
         spacing: number = 2
     ): void {
-        drawTextWithFont(text, position, direction, color, ChinesePixelFont.Thin, scale, spacing);
-    }
-
-    /**
-     * 使用指定字型畫出中文。清楚模式會補強筆劃，但限制筆劃最多兩格寬。
-     */
-    //% blockId=minecraft_chinese_pixel_draw_text_with_font
-    //% block="畫出中文 $text|在 $position|朝向 $direction|顏色 $color|字型 $font|放大 $scale 倍|字距 $spacing"
-    //% inlineInputMode=external
-    //% text.defl="翊華教育"
-    //% position.shadow=minecraftCreatePosition
-    //% color.defl=ChinesePixelColor.Blue
-    //% font.defl=ChinesePixelFont.Thin
-    //% scale.min=1 scale.max=4 scale.defl=1
-    //% spacing.min=0 spacing.max=4 spacing.defl=2
-    //% weight=98
-    export function drawTextWithFont(
-        text: string,
-        position: Position,
-        direction: CompassDirection,
-        color: ChinesePixelColor = ChinesePixelColor.Blue,
-        font: ChinesePixelFont = ChinesePixelFont.Thin,
-        scale: number = 1,
-        spacing: number = 2
-    ): void {
         scale = clampInteger(scale, 1, 4);
         spacing = clampInteger(spacing, 0, 4);
+
         const origin = position.toWorld();
-        const matrix = buildTextMatrix(text, color, font, false, spacing);
-        drawMatrix(matrix, origin, direction, scale);
+        const matrix = buildTextMatrix(text, color, false, spacing);
+        drawMatrix(matrix, origin, direction, scale, 0, 0);
     }
 
     /**
-     * 畫出直排中文。
+     * 畫出直排中文。每一個筆劃固定使用雙格方塊。
      */
     //% blockId=minecraft_chinese_pixel_draw_vertical_text
-    //% block="畫出直排中文 $text|在 $position|朝向 $direction|顏色 $color|字型 $font|放大 $scale 倍|字距 $spacing"
+    //% block="畫出直排中文 $text|在 $position|朝向 $direction|顏色 $color|放大 $scale 倍|字距 $spacing"
     //% inlineInputMode=external
     //% text.defl="翊華教育"
     //% position.shadow=minecraftCreatePosition
     //% color.defl=ChinesePixelColor.Black
-    //% font.defl=ChinesePixelFont.Thin
     //% scale.min=1 scale.max=4 scale.defl=1
     //% spacing.min=0 spacing.max=4 spacing.defl=2
     //% weight=96
@@ -129,27 +95,15 @@ namespace chinesePixel {
         position: Position,
         direction: CompassDirection,
         color: ChinesePixelColor = ChinesePixelColor.Black,
-        font: ChinesePixelFont = ChinesePixelFont.Thin,
         scale: number = 1,
         spacing: number = 2
     ): void {
         scale = clampInteger(scale, 1, 4);
         spacing = clampInteger(spacing, 0, 4);
-        const origin = position.toWorld();
-        const matrix = buildTextMatrix(text, color, font, true, spacing);
-        drawMatrix(matrix, origin, direction, scale);
-    }
 
-    /**
-     * 檢查內建字庫是否包含指定字元。
-     */
-    //% blockId=minecraft_chinese_pixel_has_character
-    //% block="中文字庫包含 $character"
-    //% character.defl="學"
-    //% weight=80
-    export function hasCharacter(character: string): boolean {
-        if (!character || character.length === 0) return false;
-        return pixelFontData.contains(character.charAt(0));
+        const origin = position.toWorld();
+        const matrix = buildTextMatrix(text, color, true, spacing);
+        drawMatrix(matrix, origin, direction, scale, 0, 0);
     }
 
     /**
@@ -171,14 +125,16 @@ namespace chinesePixel {
         return (longest * GLYPH_SIZE + (longest - 1) * spacing) * scale;
     }
 
-    function buildTextMatrix(text: string, color: ChinesePixelColor, font: ChinesePixelFont, vertical: boolean, spacing: number): number[][] {
+    function buildTextMatrix(text: string, color: ChinesePixelColor, vertical: boolean, spacing: number): number[][] {
         if (!text || text.length === 0) text = " ";
         spacing = clampInteger(spacing, 0, 4);
-        if (vertical) return buildVerticalMatrix(text, color, font, spacing);
+
+        if (vertical) return buildVerticalMatrix(text, color, spacing);
 
         const lines = splitLines(text);
         let maxLength = 1;
         for (let i = 0; i < lines.length; i++) maxLength = Math.max(maxLength, lines[i].length);
+
         const width = maxLength * GLYPH_SIZE + Math.max(0, maxLength - 1) * spacing;
         const height = lines.length * GLYPH_SIZE + Math.max(0, lines.length - 1) * DEFAULT_LINE_SPACING;
         const matrix = createMatrix(width, height);
@@ -189,15 +145,17 @@ namespace chinesePixel {
             const baseY = (lines.length - lineIndex - 1) * (GLYPH_SIZE + DEFAULT_LINE_SPACING);
             for (let characterIndex = 0; characterIndex < line.length; characterIndex++) {
                 const baseX = characterIndex * (GLYPH_SIZE + spacing);
-                paintGlyph(matrix, line.charAt(characterIndex), baseX, baseY, block, font);
+                paintGlyph(matrix, line.charAt(characterIndex), baseX, baseY, block);
             }
         }
+
         return matrix;
     }
 
-    function buildVerticalMatrix(text: string, color: ChinesePixelColor, font: ChinesePixelFont, spacing: number): number[][] {
+    function buildVerticalMatrix(text: string, color: ChinesePixelColor, spacing: number): number[][] {
         text = removeLineBreaks(text);
         if (!text || text.length === 0) text = " ";
+
         const width = GLYPH_SIZE;
         const height = text.length * GLYPH_SIZE + Math.max(0, text.length - 1) * spacing;
         const matrix = createMatrix(width, height);
@@ -205,14 +163,15 @@ namespace chinesePixel {
 
         for (let i = 0; i < text.length; i++) {
             const baseY = (text.length - i - 1) * (GLYPH_SIZE + spacing);
-            paintGlyph(matrix, text.charAt(i), 0, baseY, block, font);
+            paintGlyph(matrix, text.charAt(i), 0, baseY, block);
         }
+
         return matrix;
     }
 
-    function paintGlyph(matrix: number[][], character: string, baseX: number, baseY: number, block: number, font: ChinesePixelFont): void {
+    function paintGlyph(matrix: number[][], character: string, baseX: number, baseY: number, block: number): void {
         const rawRows = decodeGlyph(pixelFontData.glyphFor(character));
-        const rows = styledRows(rawRows, font);
+        const rows = doubleStrokeRows(rawRows);
 
         for (let rowIndex = 0; rowIndex < GLYPH_SIZE; rowIndex++) {
             const pixelY = baseY + (GLYPH_SIZE - 1 - rowIndex);
@@ -225,32 +184,52 @@ namespace chinesePixel {
         }
     }
 
-    function styledRows(rows: number[], font: ChinesePixelFont): number[] {
-        const thin = singleBlockRows(rows);
-        if (font === ChinesePixelFont.Thin) return thin;
-        if (font === ChinesePixelFont.Normal) return repairSmallGaps(thin);
-        return limitStrokeWidth(widenToMaxTwo(repairSmallGaps(thin)), 2);
+    function doubleStrokeRows(rows: number[]): number[] {
+        const skeleton = rowsToMatrix(singleBlockRows(rows));
+        const result = createMatrix(GLYPH_SIZE, GLYPH_SIZE);
+
+        for (let y = 0; y < GLYPH_SIZE; y++) {
+            for (let x = 0; x < GLYPH_SIZE; x++) {
+                if (!getMatrixPixel(skeleton, x, y)) continue;
+
+                const horizontal = getMatrixPixel(skeleton, x - 1, y) || getMatrixPixel(skeleton, x + 1, y);
+                const vertical = getMatrixPixel(skeleton, x, y - 1) || getMatrixPixel(skeleton, x, y + 1);
+
+                setMatrixPixel(result, x, y, 1);
+
+                if (vertical) setMatrixPixel(result, x + 1, y, 1);
+                if (horizontal) setMatrixPixel(result, x, y + 1, 1);
+                if (horizontal && vertical) setMatrixPixel(result, x + 1, y + 1, 1);
+                if (!horizontal && !vertical) setMatrixPixel(result, x + 1, y, 1);
+            }
+        }
+
+        return matrixToRows(result);
     }
 
     function singleBlockRows(rows: number[]): number[] {
         const pixels = rowsToMatrix(rows);
         let changed = true;
         let guard = 0;
+
         while (changed && guard < 10) {
             changed = false;
             if (thinStep(pixels, 0)) changed = true;
             if (thinStep(pixels, 1)) changed = true;
             guard++;
         }
+
         return matrixToRows(pixels);
     }
 
     function thinStep(pixels: number[][], step: number): boolean {
         const removeX: number[] = [];
         const removeY: number[] = [];
+
         for (let y = 1; y < GLYPH_SIZE - 1; y++) {
             for (let x = 1; x < GLYPH_SIZE - 1; x++) {
                 if (!getMatrixPixel(pixels, x, y)) continue;
+
                 const n = neighborCount(pixels, x, y);
                 if (n < 2 || n > 6) continue;
                 if (transitionCount(pixels, x, y) !== 1) continue;
@@ -267,79 +246,17 @@ namespace chinesePixel {
                     if (p2 * p4 * p8 !== 0) continue;
                     if (p2 * p6 * p8 !== 0) continue;
                 }
+
                 removeX.push(x);
                 removeY.push(y);
             }
         }
-        for (let i = 0; i < removeX.length; i++) setMatrixPixel(pixels, removeX[i], removeY[i], 0);
+
+        for (let i = 0; i < removeX.length; i++) {
+            setMatrixPixel(pixels, removeX[i], removeY[i], 0);
+        }
+
         return removeX.length > 0;
-    }
-
-    function repairSmallGaps(rows: number[]): number[] {
-        const pixels = rowsToMatrix(rows);
-        for (let y = 0; y < GLYPH_SIZE; y++) {
-            for (let x = 1; x < GLYPH_SIZE - 1; x++) {
-                if (!getMatrixPixel(pixels, x, y) && getMatrixPixel(pixels, x - 1, y) && getMatrixPixel(pixels, x + 1, y)) {
-                    setMatrixPixel(pixels, x, y, 1);
-                }
-            }
-        }
-        for (let x = 0; x < GLYPH_SIZE; x++) {
-            for (let y = 1; y < GLYPH_SIZE - 1; y++) {
-                if (!getMatrixPixel(pixels, x, y) && getMatrixPixel(pixels, x, y - 1) && getMatrixPixel(pixels, x, y + 1)) {
-                    setMatrixPixel(pixels, x, y, 1);
-                }
-            }
-        }
-        return matrixToRows(pixels);
-    }
-
-    function widenToMaxTwo(rows: number[]): number[] {
-        const pixels = rowsToMatrix(rows);
-        const result = rowsToMatrix(rows);
-        for (let y = 0; y < GLYPH_SIZE; y++) {
-            for (let x = 0; x < GLYPH_SIZE; x++) {
-                if (!getMatrixPixel(pixels, x, y)) continue;
-                const horizontal = getMatrixPixel(pixels, x - 1, y) || getMatrixPixel(pixels, x + 1, y);
-                const vertical = getMatrixPixel(pixels, x, y - 1) || getMatrixPixel(pixels, x, y + 1);
-                if (horizontal && !vertical && x + 1 < GLYPH_SIZE) setMatrixPixel(result, x + 1, y, 1);
-                else if (vertical && !horizontal && y + 1 < GLYPH_SIZE) setMatrixPixel(result, x, y + 1, 1);
-            }
-        }
-        return matrixToRows(result);
-    }
-
-    function limitStrokeWidth(rows: number[], maxWidth: number): number[] {
-        const matrix = rowsToMatrix(rows);
-        for (let y = 0; y < GLYPH_SIZE; y++) {
-            let runStart = -1;
-            for (let x = 0; x <= GLYPH_SIZE; x++) {
-                const on = x < GLYPH_SIZE && getMatrixPixel(matrix, x, y);
-                if (on && runStart < 0) runStart = x;
-                else if (!on && runStart >= 0) {
-                    const length = x - runStart;
-                    if (length > maxWidth) {
-                        for (let removeX = runStart + maxWidth; removeX < x; removeX++) setMatrixPixel(matrix, removeX, y, 0);
-                    }
-                    runStart = -1;
-                }
-            }
-        }
-        for (let x = 0; x < GLYPH_SIZE; x++) {
-            let runStartY = -1;
-            for (let y = 0; y <= GLYPH_SIZE; y++) {
-                const onY = y < GLYPH_SIZE && getMatrixPixel(matrix, x, y);
-                if (onY && runStartY < 0) runStartY = y;
-                else if (!onY && runStartY >= 0) {
-                    const lengthY = y - runStartY;
-                    if (lengthY > maxWidth) {
-                        for (let removeY = runStartY + maxWidth; removeY < y; removeY++) setMatrixPixel(matrix, x, removeY, 0);
-                    }
-                    runStartY = -1;
-                }
-            }
-        }
-        return matrixToRows(matrix);
     }
 
     function neighborCount(pixels: number[][], x: number, y: number): number {
@@ -403,23 +320,33 @@ namespace chinesePixel {
         return rows;
     }
 
-    function drawMatrix(matrix: number[][], origin: Position, direction: CompassDirection, scale: number): void {
+    function drawMatrix(matrix: number[][], origin: Position, direction: CompassDirection, scale: number, offsetX: number, offsetY: number): void {
         const width = matrixWidth(matrix);
         const height = matrixHeight(matrix);
         const visited = createMatrix(width, height);
+
         for (let y = 0; y < height; y++) {
             for (let x = 0; x < width; x++) {
                 const block = getMatrixPixel(matrix, x, y);
                 if (!block || getMatrixPixel(visited, x, y)) continue;
 
                 let rectWidth = 1;
-                while (x + rectWidth < width && getMatrixPixel(matrix, x + rectWidth, y) === block && !getMatrixPixel(visited, x + rectWidth, y)) rectWidth++;
+                while (
+                    x + rectWidth < width &&
+                    getMatrixPixel(matrix, x + rectWidth, y) === block &&
+                    !getMatrixPixel(visited, x + rectWidth, y)
+                ) {
+                    rectWidth++;
+                }
 
                 let rectHeight = 1;
                 let canGrow = true;
                 while (y + rectHeight < height && canGrow) {
                     for (let i = 0; i < rectWidth; i++) {
-                        if (getMatrixPixel(matrix, x + i, y + rectHeight) !== block || getMatrixPixel(visited, x + i, y + rectHeight)) {
+                        if (
+                            getMatrixPixel(matrix, x + i, y + rectHeight) !== block ||
+                            getMatrixPixel(visited, x + i, y + rectHeight)
+                        ) {
                             canGrow = false;
                             break;
                         }
@@ -430,22 +357,24 @@ namespace chinesePixel {
                 for (let yy = y; yy < y + rectHeight; yy++) {
                     for (let xx = x; xx < x + rectWidth; xx++) setMatrixPixel(visited, xx, yy, 1);
                 }
-                fillScaledRect(origin, direction, block, x, y, rectWidth, rectHeight, scale);
+
+                fillScaledRect(origin, direction, block, x, y, rectWidth, rectHeight, scale, offsetX, offsetY);
             }
         }
     }
 
-    function fillScaledRect(origin: Position, direction: CompassDirection, block: number, x: number, y: number, width: number, height: number, scale: number): void {
-        const x0 = x * scale;
-        const x1 = (x + width) * scale - 1;
-        const y0 = y * scale;
-        const y1 = (y + height) * scale - 1;
+    function fillScaledRect(origin: Position, direction: CompassDirection, block: number, x: number, y: number, width: number, height: number, scale: number, offsetX: number, offsetY: number): void {
+        const x0 = offsetX + x * scale;
+        const x1 = offsetX + (x + width) * scale - 1;
+        const y0 = offsetY + y * scale;
+        const y1 = offsetY + (y + height) * scale - 1;
         fillBlockRect(origin, direction, block, x0, y0, x1, y1);
     }
 
     function fillBlockRect(origin: Position, direction: CompassDirection, block: number, x0: number, y0: number, x1: number, y1: number): void {
         let fromPosition: Position;
         let toPosition: Position;
+
         if (direction === CompassDirection.North) {
             fromPosition = world(origin.getValue(Axis.X), origin.getValue(Axis.Y) + y0, origin.getValue(Axis.Z) - x0);
             toPosition = world(origin.getValue(Axis.X), origin.getValue(Axis.Y) + y1, origin.getValue(Axis.Z) - x1);
@@ -459,6 +388,7 @@ namespace chinesePixel {
             fromPosition = world(origin.getValue(Axis.X) - x0, origin.getValue(Axis.Y) + y0, origin.getValue(Axis.Z));
             toPosition = world(origin.getValue(Axis.X) - x1, origin.getValue(Axis.Y) + y1, origin.getValue(Axis.Z));
         }
+
         blocks.fill(block, fromPosition, toPosition, FillOperation.Replace);
     }
 
@@ -497,6 +427,7 @@ namespace chinesePixel {
     function splitLines(text: string): string[] {
         const result: string[] = [];
         let current = "";
+
         for (let i = 0; i < text.length; i++) {
             const character = text.charAt(i);
             if (character === "\n") {
@@ -506,6 +437,7 @@ namespace chinesePixel {
                 current += character;
             }
         }
+
         result.push(current);
         return result;
     }
@@ -528,18 +460,22 @@ namespace chinesePixel {
 
     function decodeGlyph(encoded: string): number[] {
         const bytes: number[] = [];
+
         for (let i = 0; i < encoded.length; i += 4) {
             const a = base64Value(encoded.charCodeAt(i));
             const b = base64Value(encoded.charCodeAt(i + 1));
             const c = base64Value(encoded.charCodeAt(i + 2));
             const d = base64Value(encoded.charCodeAt(i + 3));
+
             if (a < 0 || b < 0) break;
+
             bytes.push((a << 2) | (b >> 4));
             if (c >= 0) {
                 bytes.push(((b & 15) << 4) | (c >> 2));
                 if (d >= 0) bytes.push(((c & 3) << 6) | d);
             }
         }
+
         const rows: number[] = [];
         for (let row = 0; row < GLYPH_SIZE; row++) {
             const high = bytes[row * 2] || 0;
