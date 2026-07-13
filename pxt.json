@@ -1,8 +1,8 @@
 {
     "name": "minecraft-chinese-pixel-text",
     "displayName": "中文像素字",
-    "version": "0.2.0",
-    "description": "Type Traditional Chinese text and build it as pixel art signs, vertical text, rainbow text, glow text, and classroom boards in Minecraft Education.",
+    "version": "0.2.1",
+    "description": "Type Traditional Chinese text and build it as pixel art with vertical text, optimized rectangle filling, and selectable font styles in Minecraft Education.",
     "dependencies": {
         "core": "*"
     },
