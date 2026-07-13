@@ -1,0 +1,26 @@
+{
+    "name": "minecraft-chinese-pixel-text",
+    "displayName": "中文像素字",
+    "version": "0.1.1",
+    "description": "Type Traditional Chinese text and build it as 16x16 pixel art in Minecraft Education.",
+    "dependencies": {
+        "core": "*"
+    },
+    "files": [
+        "Minecraft_Chinese_Pixel/font-data-0.ts",
+        "Minecraft_Chinese_Pixel/font-data-1.ts",
+        "Minecraft_Chinese_Pixel/font-data-2.ts",
+        "Minecraft_Chinese_Pixel/font-data-3.ts",
+        "Minecraft_Chinese_Pixel/font-data-4.ts",
+        "Minecraft_Chinese_Pixel/font-data-5.ts",
+        "Minecraft_Chinese_Pixel/font-data-6.ts",
+        "Minecraft_Chinese_Pixel/font-index.ts",
+        "Minecraft_Chinese_Pixel/main.ts",
+        "README.md",
+        "Minecraft_Chinese_Pixel/THIRD_PARTY_NOTICES.md"
+    ],
+    "testFiles": [
+        "Minecraft_Chinese_Pixel/test.ts"
+    ],
+    "preferredEditor": "tsprj"
+}
