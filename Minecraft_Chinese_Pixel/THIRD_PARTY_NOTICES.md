@@ -1,7 +1,9 @@
-# Third-party notices
+# Third Party Notices
 
-The generated 16×16 bitmap glyph data was rasterized from Noto Sans CJK TC Bold.
+## Noto Sans CJK
 
-Noto Sans CJK is distributed under the SIL Open Font License 1.1.
+Generated bitmap glyph data is derived from Noto Sans CJK TC Regular.
 
-This package contains only generated bitmap data and does not include or redistribute the font file.
+Noto Sans CJK is licensed under the SIL Open Font License 1.1.
+
+This package does not include or distribute the original font file.
