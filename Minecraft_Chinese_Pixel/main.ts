@@ -37,14 +37,12 @@ enum ChinesePixelColor {
 }
 
 enum ChinesePixelFont {
-    //% block="標準"
+    //% block="標準清楚"
     Normal = 0,
-    //% block="粗體"
+    //% block="粗體清楚"
     Bold = 1,
     //% block="細體"
-    Thin = 2,
-    //% block="空心"
-    Outline = 3
+    Thin = 2
 }
 
 //% block="中文像素字"
@@ -56,7 +54,7 @@ namespace chinesePixel {
     const DEFAULT_LINE_SPACING = 2;
 
     /**
-     * 將輸入文字建造成 16×16 像素字。
+     * 將輸入文字建造成 16×16 像素字。預設使用粗體清楚版本，遠距離較容易閱讀。
      * 支援繁體中文、英文、數字、常用標點與換行。
      *
      * @param text 要建造的文字，例如：你好麥塊
@@ -83,11 +81,11 @@ namespace chinesePixel {
         scale: number = 1,
         spacing: number = 1
     ): void {
-        drawTextWithFont(text, position, direction, color, ChinesePixelFont.Normal, scale, spacing);
+        drawTextWithFont(text, position, direction, color, ChinesePixelFont.Bold, scale, spacing);
     }
 
     /**
-     * 使用指定字型畫出中文。
+     * 使用指定字型畫出中文。已移除空心字，保留較適合閱讀的標準、粗體、細體。
      */
     //% blockId=minecraft_chinese_pixel_draw_text_with_font
     //% block="畫出中文 $text|在 $position|朝向 $direction|顏色 $color|字型 $font|放大 $scale 倍|字距 $spacing"
@@ -104,7 +102,7 @@ namespace chinesePixel {
         position: Position,
         direction: CompassDirection,
         color: ChinesePixelColor = ChinesePixelColor.Blue,
-        font: ChinesePixelFont = ChinesePixelFont.Normal,
+        font: ChinesePixelFont = ChinesePixelFont.Bold,
         scale: number = 1,
         spacing: number = 1
     ): void {
@@ -181,9 +179,7 @@ namespace chinesePixel {
         if (!text || text.length === 0) text = " ";
         spacing = clampInteger(spacing, 0, 4);
 
-        if (vertical) {
-            return buildVerticalMatrix(text, color, font, spacing);
-        }
+        if (vertical) return buildVerticalMatrix(text, color, font, spacing);
 
         const lines = splitLines(text);
         let maxLength = 1;
@@ -235,9 +231,32 @@ namespace chinesePixel {
         }
     }
 
-    /**
-     * 將同色連續區域合併成矩形，減少 blocks.fill 指令數量。
-     */
+    function styledPixelIsSet(rows: number[], x: number, y: number, font: ChinesePixelFont): boolean {
+        const base = rawPixelIsSet(rows, x, y);
+
+        if (font === ChinesePixelFont.Thin) {
+            // 細體：保留原字形中比較穩定的骨架，避免完全變成空心或斷裂。
+            return base && (
+                rawPixelIsSet(rows, x - 1, y) ||
+                rawPixelIsSet(rows, x + 1, y) ||
+                rawPixelIsSet(rows, x, y - 1) ||
+                rawPixelIsSet(rows, x, y + 1)
+            );
+        }
+
+        if (font === ChinesePixelFont.Bold || font === ChinesePixelFont.Normal) {
+            // 清楚版：加強右側與下方筆畫，中文遠看比較清楚。
+            return base || rawPixelIsSet(rows, x - 1, y) || rawPixelIsSet(rows, x, y - 1);
+        }
+
+        return base;
+    }
+
+    function rawPixelIsSet(rows: number[], x: number, y: number): boolean {
+        if (x < 0 || x >= GLYPH_SIZE || y < 0 || y >= GLYPH_SIZE) return false;
+        return (rows[y] & (1 << (GLYPH_SIZE - 1 - x))) !== 0;
+    }
+
     function drawMatrix(matrix: number[][], origin: Position, direction: CompassDirection, scale: number, offsetX: number, offsetY: number): void {
         const width = matrixWidth(matrix);
         const height = matrixHeight(matrix);
@@ -303,43 +322,75 @@ namespace chinesePixel {
         blocks.fill(block, fromPosition, toPosition, FillOperation.Replace);
     }
 
-    function styledPixelIsSet(rows: number[], x: number, rowIndex: number, font: ChinesePixelFont): boolean {
-        const center = pixelIsSet(rows, x, rowIndex);
-
-        if (font === ChinesePixelFont.Normal) return center;
-
-        if (font === ChinesePixelFont.Bold) {
-            return center || pixelIsSet(rows, x - 1, rowIndex) || pixelIsSet(rows, x, rowIndex - 1);
+    function createMatrix(width: number, height: number): number[][] {
+        const matrix: number[][] = [];
+        for (let y = 0; y < height; y++) {
+            const row: number[] = [];
+            for (let x = 0; x < width; x++) row.push(0);
+            matrix.push(row);
         }
-
-        if (font === ChinesePixelFont.Thin) {
-            if (!center) return false;
-            const left = pixelIsSet(rows, x - 1, rowIndex);
-            const right = pixelIsSet(rows, x + 1, rowIndex);
-            const up = pixelIsSet(rows, x, rowIndex - 1);
-            const down = pixelIsSet(rows, x, rowIndex + 1);
-            return !(left && right && up && down);
-        }
-
-        if (font === ChinesePixelFont.Outline) {
-            if (!center) return false;
-            const leftEmpty = !pixelIsSet(rows, x - 1, rowIndex);
-            const rightEmpty = !pixelIsSet(rows, x + 1, rowIndex);
-            const upEmpty = !pixelIsSet(rows, x, rowIndex - 1);
-            const downEmpty = !pixelIsSet(rows, x, rowIndex + 1);
-            return leftEmpty || rightEmpty || upEmpty || downEmpty;
-        }
-
-        return center;
+        return matrix;
     }
 
-    function pixelIsSet(rows: number[], x: number, rowIndex: number): boolean {
-        if (x < 0 || x >= GLYPH_SIZE || rowIndex < 0 || rowIndex >= GLYPH_SIZE) return false;
-        return (rows[rowIndex] & (1 << (15 - x))) !== 0;
+    function matrixWidth(matrix: number[][]): number {
+        if (!matrix || matrix.length === 0) return 0;
+        return matrix[0].length;
+    }
+
+    function matrixHeight(matrix: number[][]): number {
+        if (!matrix) return 0;
+        return matrix.length;
+    }
+
+    function getMatrixPixel(matrix: number[][], x: number, y: number): number {
+        if (y < 0 || y >= matrix.length) return 0;
+        if (x < 0 || x >= matrix[y].length) return 0;
+        return matrix[y][x];
+    }
+
+    function setMatrixPixel(matrix: number[][], x: number, y: number, value: number): void {
+        if (y < 0 || y >= matrix.length) return;
+        if (x < 0 || x >= matrix[y].length) return;
+        matrix[y][x] = value;
+    }
+
+    function splitLines(text: string): string[] {
+        const result: string[] = [];
+        let current = "";
+
+        for (let i = 0; i < text.length; i++) {
+            const character = text.charAt(i);
+            if (character === "\n") {
+                result.push(current);
+                current = "";
+            } else if (character !== "\r") {
+                current += character;
+            }
+        }
+
+        result.push(current);
+        return result;
+    }
+
+    function removeLineBreaks(text: string): string {
+        let result = "";
+        for (let i = 0; i < text.length; i++) {
+            const character = text.charAt(i);
+            if (character !== "\n" && character !== "\r") result += character;
+        }
+        return result;
+    }
+
+    function clampInteger(value: number, minimum: number, maximum: number): number {
+        value = Math.round(value);
+        if (value < minimum) return minimum;
+        if (value > maximum) return maximum;
+        return value;
     }
 
     function decodeGlyph(encoded: string): number[] {
         const bytes: number[] = [];
+
         for (let i = 0; i < encoded.length; i += 4) {
             const a = base64Value(encoded.charCodeAt(i));
             const b = base64Value(encoded.charCodeAt(i + 1));
@@ -391,70 +442,5 @@ namespace chinesePixel {
             case ChinesePixelColor.Brown: return BROWN_CONCRETE;
             default: return BLACK_CONCRETE;
         }
-    }
-
-    function splitLines(text: string): string[] {
-        const result: string[] = [];
-        let current = "";
-
-        for (let i = 0; i < text.length; i++) {
-            const character = text.charAt(i);
-            if (character === "\n") {
-                result.push(current);
-                current = "";
-            } else if (character !== "\r") {
-                current += character;
-            }
-        }
-
-        result.push(current);
-        return result;
-    }
-
-    function removeLineBreaks(text: string): string {
-        let result = "";
-        for (let i = 0; i < text.length; i++) {
-            const character = text.charAt(i);
-            if (character !== "\n" && character !== "\r") result += character;
-        }
-        return result;
-    }
-
-    function clampInteger(value: number, minimum: number, maximum: number): number {
-        value = Math.round(value);
-        if (value < minimum) return minimum;
-        if (value > maximum) return maximum;
-        return value;
-    }
-
-    function createMatrix(width: number, height: number): number[][] {
-        const matrix: number[][] = [];
-        for (let x = 0; x < width; x++) {
-            const column: number[] = [];
-            for (let y = 0; y < height; y++) column.push(0);
-            matrix.push(column);
-        }
-        return matrix;
-    }
-
-    function matrixWidth(matrix: number[][]): number {
-        return matrix.length;
-    }
-
-    function matrixHeight(matrix: number[][]): number {
-        if (matrix.length === 0) return 0;
-        return matrix[0].length;
-    }
-
-    function setMatrixPixel(matrix: number[][], x: number, y: number, value: number): void {
-        if (x < 0 || x >= matrixWidth(matrix)) return;
-        if (y < 0 || y >= matrixHeight(matrix)) return;
-        matrix[x][y] = value;
-    }
-
-    function getMatrixPixel(matrix: number[][], x: number, y: number): number {
-        if (x < 0 || x >= matrixWidth(matrix)) return 0;
-        if (y < 0 || y >= matrixHeight(matrix)) return 0;
-        return matrix[x][y];
     }
 }
