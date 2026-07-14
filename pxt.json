@@ -1,7 +1,7 @@
 {
     "name": "minecraft-chinese-pixel-text",
     "displayName": "中文像素字",
-    "version": "0.4.0",
+    "version": "0.4.1",
     "description": "Build right-to-left 32x32 Chinese pixel text with simplified MakeCode block labels in Minecraft Education.",
     "dependencies": {
         "core": "*"
