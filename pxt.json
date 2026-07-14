@@ -1,8 +1,8 @@
 {
     "name": "minecraft-chinese-pixel-text",
     "displayName": "中文像素字",
-    "version": "0.3.5",
-    "description": "Type Traditional Chinese text and build true left-to-right non-mirrored 32x32 double-stroke pixel art with vertical text in Minecraft Education.",
+    "version": "0.3.6",
+    "description": "Build true left-to-right non-mirrored 32x32 Chinese pixel text using explicit front-facing coordinates in Minecraft Education.",
     "dependencies": {
         "core": "*"
     },
