@@ -1,8 +1,8 @@
 {
     "name": "minecraft-chinese-pixel-text",
     "displayName": "中文像素字",
-    "version": "0.3.7",
-    "description": "Build left-to-right 32x32 Chinese pixel text with corrected non-mirrored glyphs and explicit front-facing coordinates in Minecraft Education.",
+    "version": "0.3.8",
+    "description": "Build 32x32 Chinese pixel text and draw custom multicolor images with the MakeCode sprite editor in Minecraft Education.",
     "dependencies": {
         "core": "*"
     },
