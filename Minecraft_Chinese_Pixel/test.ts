@@ -1,8 +1,8 @@
 player.onChat("中文", function () {
     chinesePixel.drawText(
-        "台北市",
+        "你好麥塊",
         pos(0, 1, 5),
-        EAST,
+        SOUTH,
         ChinesePixelColor.Blue,
         1,
         4
@@ -13,7 +13,7 @@ player.onChat("直排", function () {
     chinesePixel.drawVerticalText(
         "翊華教育",
         pos(0, 1, 5),
-        EAST,
+        SOUTH,
         ChinesePixelColor.Black,
         1,
         4
