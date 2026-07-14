@@ -1,7 +1,7 @@
 /**
  * Minecraft Education 中文像素字擴充功能
  * 32×32 中文像素字，固定雙格筆劃。
- * 橫式文字依輸入順序由左到右，並以「正面朝向」決定閱讀面。
+ * 橫式文字依輸入順序由左到右；單字字形另外做水平校正，避免左右顛倒。
  */
 
 enum ChinesePixelColor {
@@ -47,8 +47,8 @@ namespace chinesePixel {
     const DEFAULT_LINE_SPACING = 4;
 
     /**
-     * 畫出由左到右的 32×32 中文。請從所選的正面方向觀看。
-     * NORTH：站在北側看；EAST：站在東側看；SOUTH：站在南側看；WEST：站在西側看。
+     * 畫出由左到右的 32×32 中文。
+     * 輸入「你好麥塊」時，正面觀看固定顯示為「你、好、麥、塊」。
      * @param text 要建造的文字，例如：你好麥塊
      * @param position 文字左下角位置
      * @param direction 文字正面朝向
@@ -56,7 +56,7 @@ namespace chinesePixel {
      * @param scale 放大倍率，建議 1
      * @param spacing 字距，建議 4
      */
-    //% blockId=minecraft_chinese_pixel_draw_text_ltr_v036
+    //% blockId=minecraft_chinese_pixel_draw_text_ltr_v037
     //% block="畫出左到右32×32中文 $text|在 $position|正面朝向 $direction|顏色 $color|放大 $scale 倍|字距 $spacing"
     //% inlineInputMode=external
     //% text.defl="你好麥塊"
@@ -76,14 +76,13 @@ namespace chinesePixel {
     ): void {
         scale = clampInteger(scale, 1, 4);
         spacing = clampInteger(spacing, 0, 8);
-        const origin = position.toWorld();
-        drawHorizontalInternal(text, origin, direction, blockForColor(color), scale, spacing);
+        drawHorizontalInternal(text, position.toWorld(), direction, blockForColor(color), scale, spacing);
     }
 
     /**
      * 畫出 32×32 直排中文，第一個字在最上方。
      */
-    //% blockId=minecraft_chinese_pixel_draw_vertical_text_v036
+    //% blockId=minecraft_chinese_pixel_draw_vertical_text_v037
     //% block="畫出32×32直排中文 $text|在 $position|正面朝向 $direction|顏色 $color|放大 $scale 倍|字距 $spacing"
     //% inlineInputMode=external
     //% text.defl="翊華教育"
@@ -103,14 +102,11 @@ namespace chinesePixel {
     ): void {
         scale = clampInteger(scale, 1, 4);
         spacing = clampInteger(spacing, 0, 8);
-        const origin = position.toWorld();
-        drawVerticalInternal(removeLineBreaks(text), origin, direction, blockForColor(color), scale, spacing);
+        drawVerticalInternal(removeLineBreaks(text), position.toWorld(), direction, blockForColor(color), scale, spacing);
     }
 
-    /**
-     * 計算一行 32×32 中文的寬度。
-     */
-    //% blockId=minecraft_chinese_pixel_text_width_v036
+    /** 計算一行 32×32 中文的寬度。 */
+    //% blockId=minecraft_chinese_pixel_text_width_v037
     //% block="$text 放大 $scale 倍 字距 $spacing 的寬度"
     //% text.defl="你好麥塊"
     //% scale.min=1 scale.max=4 scale.defl=1
@@ -126,7 +122,14 @@ namespace chinesePixel {
         return (longest * GLYPH_SIZE + (longest - 1) * spacing) * scale;
     }
 
-    function drawHorizontalInternal(text: string, origin: Position, direction: CompassDirection, block: number, scale: number, spacing: number): void {
+    function drawHorizontalInternal(
+        text: string,
+        origin: Position,
+        direction: CompassDirection,
+        block: number,
+        scale: number,
+        spacing: number
+    ): void {
         if (!text || text.length === 0) text = " ";
         const lines = splitLines(text);
 
@@ -135,14 +138,21 @@ namespace chinesePixel {
             const baseY = (lines.length - lineIndex - 1) * (GLYPH_SIZE + DEFAULT_LINE_SPACING) * scale;
 
             for (let characterIndex = 0; characterIndex < line.length; characterIndex++) {
-                // 嚴格依輸入順序：你、好、麥、塊。
+                // 字序不反轉：第一個字放最左側，後面的字往右排列。
                 const baseX = characterIndex * (GLYPH_SIZE + spacing) * scale;
                 drawGlyph(line.charAt(characterIndex), origin, direction, block, baseX, baseY, scale);
             }
         }
     }
 
-    function drawVerticalInternal(text: string, origin: Position, direction: CompassDirection, block: number, scale: number, spacing: number): void {
+    function drawVerticalInternal(
+        text: string,
+        origin: Position,
+        direction: CompassDirection,
+        block: number,
+        scale: number,
+        spacing: number
+    ): void {
         if (!text || text.length === 0) text = " ";
 
         for (let i = 0; i < text.length; i++) {
@@ -151,7 +161,15 @@ namespace chinesePixel {
         }
     }
 
-    function drawGlyph(character: string, origin: Position, direction: CompassDirection, block: number, baseX: number, baseY: number, scale: number): void {
+    function drawGlyph(
+        character: string,
+        origin: Position,
+        direction: CompassDirection,
+        block: number,
+        baseX: number,
+        baseY: number,
+        scale: number
+    ): void {
         const rows = singleBlockRows(decodeGlyph(pixelFontData.glyphFor(character)));
 
         for (let sourceY = 0; sourceY < SOURCE_GLYPH_SIZE; sourceY++) {
@@ -166,9 +184,12 @@ namespace chinesePixel {
                 while (sourceX < SOURCE_GLYPH_SIZE && sourcePixelIsSet(sourceRow, sourceX)) sourceX++;
                 const runEnd = sourceX - 1;
 
-                // 字庫的 x=0 就是字形左側，不再做任何水平鏡像。
-                const x0 = baseX + runStart * 2 * scale;
-                const x1 = baseX + ((runEnd + 1) * 2 * scale) - 1;
+                // 只校正「單一中文字」的左右方向；整句字序保持不變。
+                // 來源字庫的位元方向與 Minecraft 正面座標相反，因此在字格內水平翻轉一次。
+                const correctedStart = SOURCE_GLYPH_SIZE - 1 - runEnd;
+                const correctedEnd = SOURCE_GLYPH_SIZE - 1 - runStart;
+                const x0 = baseX + correctedStart * 2 * scale;
+                const x1 = baseX + ((correctedEnd + 1) * 2 * scale) - 1;
                 const y0 = baseY + (SOURCE_GLYPH_SIZE - 1 - sourceY) * 2 * scale;
                 const y1 = y0 + 2 * scale - 1;
 
@@ -178,10 +199,18 @@ namespace chinesePixel {
     }
 
     /**
-     * 將本地座標轉成 Minecraft 世界座標。
-     * 本地 x 永遠代表「從文字正面看向右」，因此輸入順序固定由左到右。
+     * 本地 x 代表「從文字正面看向右」。
+     * 字序與世界座標的方向只在這裡處理，不再於字串或字元索引中反轉。
      */
-    function fillBlockRect(origin: Position, direction: CompassDirection, block: number, x0: number, y0: number, x1: number, y1: number): void {
+    function fillBlockRect(
+        origin: Position,
+        direction: CompassDirection,
+        block: number,
+        x0: number,
+        y0: number,
+        x1: number,
+        y1: number
+    ): void {
         let fromPosition: Position;
         let toPosition: Position;
         const ox = origin.getValue(Axis.X);
@@ -189,19 +218,15 @@ namespace chinesePixel {
         const oz = origin.getValue(Axis.Z);
 
         if (direction === CompassDirection.North) {
-            // 正面在北側；站在北側向南看時，畫面右方是世界西方（-X）。
             fromPosition = world(ox - x0, oy + y0, oz);
             toPosition = world(ox - x1, oy + y1, oz);
         } else if (direction === CompassDirection.East) {
-            // 正面在東側；站在東側向西看時，畫面右方是世界北方（-Z）。
             fromPosition = world(ox, oy + y0, oz - x0);
             toPosition = world(ox, oy + y1, oz - x1);
         } else if (direction === CompassDirection.South) {
-            // 正面在南側；站在南側向北看時，畫面右方是世界東方（+X）。
             fromPosition = world(ox + x0, oy + y0, oz);
             toPosition = world(ox + x1, oy + y1, oz);
         } else {
-            // 正面在西側；站在西側向東看時，畫面右方是世界南方（+Z）。
             fromPosition = world(ox, oy + y0, oz + x0);
             toPosition = world(ox, oy + y1, oz + x1);
         }
