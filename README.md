@@ -4,49 +4,48 @@
 
 ## 正確安裝網址
 
-在 Minecraft Education MakeCode 的「擴充功能 Extensions」中，請貼上儲存庫根目錄網址：
+在 Minecraft Education MakeCode 的「擴充功能 Extensions」中貼上：
 
 ```text
 https://github.com/JackChung-Taiwan/new_pixel
 ```
 
-不要貼 `/tree/main/Minecraft_Chinese_Pixel` 資料夾網址，MakeCode 擴充功能需要讀取儲存庫根目錄的 `pxt.json`。
+## v0.3.6：真正左到右版本
 
-## v0.3.4：32×32 橫式左到右版本
+這一版重新定義了文字座標：
 
-此版本改成 32×32 中文像素字：
+1. 橫式文字嚴格依照輸入順序排列。
+2. 輸入 `你好麥塊`，正面觀看一定是 `你 → 好 → 麥 → 塊`。
+3. 單一中文字不做水平鏡像。
+4. 每個中文字為 32×32。
+5. 每個字形像素放大成 2×2 方塊，也就是雙格筆劃。
+6. 不提供字型類型選擇。
+7. 已刪除「中文字庫包含 學」積木。
+8. 保留直排中文與文字寬度積木。
 
-1. 每個中文字建造成 32×32 方塊字。
-2. 每個原始筆劃像素固定放大成 2×2 方塊，也就是雙格筆劃。
-3. 單字本身不會左右鏡像。
-4. 橫式中文會由左到右排列，例如「台北市」會顯示為「台 → 北 → 市」。
-5. 不再提供字型類型選擇，避免學生操作混淆。
-6. 已刪除「中文字庫包含 學」積木。
-7. 保留直排中文。
-8. 同一列連續像素會合併成 `blocks.fill`，比逐格放置更快。
+## 正面朝向
 
-## 積木功能
-
-```text
-畫出32×32中文 [你好麥塊] 在 [位置] 朝向 [方向] 顏色 [顏色] 放大 [倍率] 倍 字距 [字距]
-```
+方向現在代表文字的正面：
 
 ```text
-畫出32×32直排中文 [翊華教育] 在 [位置] 朝向 [方向] 顏色 [顏色] 放大 [倍率] 倍 字距 [字距]
+NORTH：站在文字北側觀看
+EAST：站在文字東側觀看
+SOUTH：站在文字南側觀看
+WEST：站在文字西側觀看
 ```
 
-```text
-[文字] 放大 [倍率] 倍 字距 [字距] 的寬度
-```
+從所選的正面觀看，橫式文字才會是正確的左到右順序。
 
-## JavaScript 範例
+## 建議測試
+
+先使用 `SOUTH`，並站在文字南側往北看：
 
 ```typescript
 player.onChat("中文", function () {
     chinesePixel.drawText(
-        "台北市",
+        "你好麥塊",
         pos(0, 1, 5),
-        EAST,
+        SOUTH,
         ChinesePixelColor.Blue,
         1,
         4
@@ -54,12 +53,26 @@ player.onChat("中文", function () {
 })
 ```
 
+畫面應顯示：
+
+```text
+你　好　麥　塊
+```
+
+不能顯示成：
+
+```text
+塊　麥　好　你
+```
+
+## 直排範例
+
 ```typescript
 player.onChat("直排", function () {
     chinesePixel.drawVerticalText(
         "翊華教育",
         pos(0, 1, 5),
-        EAST,
+        SOUTH,
         ChinesePixelColor.Black,
         1,
         4
@@ -67,12 +80,9 @@ player.onChat("直排", function () {
 })
 ```
 
-## 建議
+## 建議設定
 
-- `scale` 建議先用 1。
-- `spacing` 建議用 4，32×32 字比較不會黏在一起。
-- 若文字太大，請先測試 2～4 個字。
-
-## 檔案結構
-
-`pxt.json` 放在儲存庫根目錄，實際程式檔放在 `Minecraft_Chinese_Pixel/` 資料夾。這樣 MakeCode 才能從 GitHub 根目錄正確載入擴充功能。
+- `scale`：先使用 1。
+- `spacing`：建議使用 4。
+- 32×32 文字很大，先測試 2～4 個字。
+- 更新擴充功能後，請建立新的 MakeCode 專案，避免舊快取。
