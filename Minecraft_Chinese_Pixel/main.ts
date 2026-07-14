@@ -1,6 +1,7 @@
 /**
  * Minecraft Education 中文像素字擴充功能
- * 32×32 中文像素字。固定使用雙格筆劃，不提供字型選擇，橫式文字由左到右。
+ * 32×32 中文像素字，固定雙格筆劃。
+ * 橫式文字依輸入順序由左到右，並以「正面朝向」決定閱讀面。
  */
 
 enum ChinesePixelColor {
@@ -46,19 +47,21 @@ namespace chinesePixel {
     const DEFAULT_LINE_SPACING = 4;
 
     /**
-     * 畫出 32×32 中文像素字。每個筆劃固定使用雙格方塊，橫式文字由左到右。
+     * 畫出由左到右的 32×32 中文。請從所選的正面方向觀看。
+     * NORTH：站在北側看；EAST：站在東側看；SOUTH：站在南側看；WEST：站在西側看。
      * @param text 要建造的文字，例如：你好麥塊
-     * @param position 整段文字左下角的起始位置
-     * @param direction 文字面向的方向
+     * @param position 文字左下角位置
+     * @param direction 文字正面朝向
      * @param color 混凝土顏色
-     * @param scale 每一個 32×32 像素再放大幾倍，建議 1
-     * @param spacing 每個字之間保留幾個方塊，建議 4
+     * @param scale 放大倍率，建議 1
+     * @param spacing 字距，建議 4
      */
-    //% blockId=minecraft_chinese_pixel_draw_text
-    //% block="畫出32×32中文 $text|在 $position|朝向 $direction|顏色 $color|放大 $scale 倍|字距 $spacing"
+    //% blockId=minecraft_chinese_pixel_draw_text_ltr_v036
+    //% block="畫出左到右32×32中文 $text|在 $position|正面朝向 $direction|顏色 $color|放大 $scale 倍|字距 $spacing"
     //% inlineInputMode=external
     //% text.defl="你好麥塊"
     //% position.shadow=minecraftCreatePosition
+    //% direction.defl=CompassDirection.South
     //% color.defl=ChinesePixelColor.Blue
     //% scale.min=1 scale.max=4 scale.defl=1
     //% spacing.min=0 spacing.max=8 spacing.defl=4
@@ -74,17 +77,18 @@ namespace chinesePixel {
         scale = clampInteger(scale, 1, 4);
         spacing = clampInteger(spacing, 0, 8);
         const origin = position.toWorld();
-        drawTextInternal(text, origin, direction, blockForColor(color), false, scale, spacing);
+        drawHorizontalInternal(text, origin, direction, blockForColor(color), scale, spacing);
     }
 
     /**
-     * 畫出 32×32 直排中文像素字。每個筆劃固定使用雙格方塊。
+     * 畫出 32×32 直排中文，第一個字在最上方。
      */
-    //% blockId=minecraft_chinese_pixel_draw_vertical_text
-    //% block="畫出32×32直排中文 $text|在 $position|朝向 $direction|顏色 $color|放大 $scale 倍|字距 $spacing"
+    //% blockId=minecraft_chinese_pixel_draw_vertical_text_v036
+    //% block="畫出32×32直排中文 $text|在 $position|正面朝向 $direction|顏色 $color|放大 $scale 倍|字距 $spacing"
     //% inlineInputMode=external
     //% text.defl="翊華教育"
     //% position.shadow=minecraftCreatePosition
+    //% direction.defl=CompassDirection.South
     //% color.defl=ChinesePixelColor.Black
     //% scale.min=1 scale.max=4 scale.defl=1
     //% spacing.min=0 spacing.max=8 spacing.defl=4
@@ -100,13 +104,13 @@ namespace chinesePixel {
         scale = clampInteger(scale, 1, 4);
         spacing = clampInteger(spacing, 0, 8);
         const origin = position.toWorld();
-        drawTextInternal(text, origin, direction, blockForColor(color), true, scale, spacing);
+        drawVerticalInternal(removeLineBreaks(text), origin, direction, blockForColor(color), scale, spacing);
     }
 
     /**
-     * 計算一行 32×32 中文建造後的寬度。
+     * 計算一行 32×32 中文的寬度。
      */
-    //% blockId=minecraft_chinese_pixel_text_width
+    //% blockId=minecraft_chinese_pixel_text_width_v036
     //% block="$text 放大 $scale 倍 字距 $spacing 的寬度"
     //% text.defl="你好麥塊"
     //% scale.min=1 scale.max=4 scale.defl=1
@@ -122,22 +126,16 @@ namespace chinesePixel {
         return (longest * GLYPH_SIZE + (longest - 1) * spacing) * scale;
     }
 
-    function drawTextInternal(text: string, origin: Position, direction: CompassDirection, block: number, vertical: boolean, scale: number, spacing: number): void {
-        if (!text || text.length === 0) text = " ";
-        if (vertical) {
-            drawVerticalInternal(removeLineBreaks(text), origin, direction, block, scale, spacing);
-        } else {
-            drawHorizontalInternal(text, origin, direction, block, scale, spacing);
-        }
-    }
-
     function drawHorizontalInternal(text: string, origin: Position, direction: CompassDirection, block: number, scale: number, spacing: number): void {
+        if (!text || text.length === 0) text = " ";
         const lines = splitLines(text);
+
         for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
             const line = lines[lineIndex];
             const baseY = (lines.length - lineIndex - 1) * (GLYPH_SIZE + DEFAULT_LINE_SPACING) * scale;
+
             for (let characterIndex = 0; characterIndex < line.length; characterIndex++) {
-                // 橫式文字依輸入順序排列：第一個字在左邊，後面往右延伸。
+                // 嚴格依輸入順序：你、好、麥、塊。
                 const baseX = characterIndex * (GLYPH_SIZE + spacing) * scale;
                 drawGlyph(line.charAt(characterIndex), origin, direction, block, baseX, baseY, scale);
             }
@@ -146,6 +144,7 @@ namespace chinesePixel {
 
     function drawVerticalInternal(text: string, origin: Position, direction: CompassDirection, block: number, scale: number, spacing: number): void {
         if (!text || text.length === 0) text = " ";
+
         for (let i = 0; i < text.length; i++) {
             const baseY = (text.length - i - 1) * (GLYPH_SIZE + spacing) * scale;
             drawGlyph(text.charAt(i), origin, direction, block, 0, baseY, scale);
@@ -158,6 +157,7 @@ namespace chinesePixel {
         for (let sourceY = 0; sourceY < SOURCE_GLYPH_SIZE; sourceY++) {
             const sourceRow = rows[sourceY];
             let sourceX = 0;
+
             while (sourceX < SOURCE_GLYPH_SIZE) {
                 while (sourceX < SOURCE_GLYPH_SIZE && !sourcePixelIsSet(sourceRow, sourceX)) sourceX++;
                 if (sourceX >= SOURCE_GLYPH_SIZE) break;
@@ -166,11 +166,10 @@ namespace chinesePixel {
                 while (sourceX < SOURCE_GLYPH_SIZE && sourcePixelIsSet(sourceRow, sourceX)) sourceX++;
                 const runEnd = sourceX - 1;
 
-                // 32×32：每個 16×16 原始像素放大成 2×2 方塊。
-                // 單字本身維持正常閱讀方向，不做左右鏡像。
-                const x0 = baseX + ((SOURCE_GLYPH_SIZE - 1 - runEnd) * 2) * scale;
-                const x1 = baseX + (((SOURCE_GLYPH_SIZE - 1 - runStart) * 2) + 1) * scale + (scale - 1);
-                const y0 = baseY + ((SOURCE_GLYPH_SIZE - 1 - sourceY) * 2) * scale;
+                // 字庫的 x=0 就是字形左側，不再做任何水平鏡像。
+                const x0 = baseX + runStart * 2 * scale;
+                const x1 = baseX + ((runEnd + 1) * 2 * scale) - 1;
+                const y0 = baseY + (SOURCE_GLYPH_SIZE - 1 - sourceY) * 2 * scale;
                 const y1 = y0 + 2 * scale - 1;
 
                 fillBlockRect(origin, direction, block, x0, y0, x1, y1);
@@ -178,14 +177,48 @@ namespace chinesePixel {
         }
     }
 
+    /**
+     * 將本地座標轉成 Minecraft 世界座標。
+     * 本地 x 永遠代表「從文字正面看向右」，因此輸入順序固定由左到右。
+     */
+    function fillBlockRect(origin: Position, direction: CompassDirection, block: number, x0: number, y0: number, x1: number, y1: number): void {
+        let fromPosition: Position;
+        let toPosition: Position;
+        const ox = origin.getValue(Axis.X);
+        const oy = origin.getValue(Axis.Y);
+        const oz = origin.getValue(Axis.Z);
+
+        if (direction === CompassDirection.North) {
+            // 正面在北側；站在北側向南看時，畫面右方是世界西方（-X）。
+            fromPosition = world(ox - x0, oy + y0, oz);
+            toPosition = world(ox - x1, oy + y1, oz);
+        } else if (direction === CompassDirection.East) {
+            // 正面在東側；站在東側向西看時，畫面右方是世界北方（-Z）。
+            fromPosition = world(ox, oy + y0, oz - x0);
+            toPosition = world(ox, oy + y1, oz - x1);
+        } else if (direction === CompassDirection.South) {
+            // 正面在南側；站在南側向北看時，畫面右方是世界東方（+X）。
+            fromPosition = world(ox + x0, oy + y0, oz);
+            toPosition = world(ox + x1, oy + y1, oz);
+        } else {
+            // 正面在西側；站在西側向東看時，畫面右方是世界南方（+Z）。
+            fromPosition = world(ox, oy + y0, oz + x0);
+            toPosition = world(ox, oy + y1, oz + x1);
+        }
+
+        blocks.fill(block, fromPosition, toPosition, FillOperation.Replace);
+    }
+
     function decodeGlyph(encoded: string): number[] {
         const bytes: number[] = [];
+
         for (let i = 0; i < encoded.length; i += 4) {
             const a = base64Value(encoded.charCodeAt(i));
             const b = base64Value(encoded.charCodeAt(i + 1));
             const c = base64Value(encoded.charCodeAt(i + 2));
             const d = base64Value(encoded.charCodeAt(i + 3));
             if (a < 0 || b < 0) break;
+
             bytes.push((a << 2) | (b >> 4));
             if (c >= 0) {
                 bytes.push(((b & 15) << 4) | (c >> 2));
@@ -206,28 +239,33 @@ namespace chinesePixel {
         const pixels = rowsToMatrix(rows);
         let changed = true;
         let guard = 0;
+
         while (changed && guard < 8) {
             changed = false;
             if (thinStep(pixels, 0)) changed = true;
             if (thinStep(pixels, 1)) changed = true;
             guard++;
         }
+
         return matrixToRows(pixels);
     }
 
     function thinStep(pixels: number[][], step: number): boolean {
         const removeX: number[] = [];
         const removeY: number[] = [];
+
         for (let y = 1; y < SOURCE_GLYPH_SIZE - 1; y++) {
             for (let x = 1; x < SOURCE_GLYPH_SIZE - 1; x++) {
                 if (!getMatrixPixel(pixels, x, y)) continue;
                 const n = neighborCount(pixels, x, y);
                 if (n < 2 || n > 6) continue;
                 if (transitionCount(pixels, x, y) !== 1) continue;
+
                 const p2 = getMatrixPixel(pixels, x, y - 1) ? 1 : 0;
                 const p4 = getMatrixPixel(pixels, x + 1, y) ? 1 : 0;
                 const p6 = getMatrixPixel(pixels, x, y + 1) ? 1 : 0;
                 const p8 = getMatrixPixel(pixels, x - 1, y) ? 1 : 0;
+
                 if (step === 0) {
                     if (p2 * p4 * p6 !== 0) continue;
                     if (p4 * p6 * p8 !== 0) continue;
@@ -235,10 +273,12 @@ namespace chinesePixel {
                     if (p2 * p4 * p8 !== 0) continue;
                     if (p2 * p6 * p8 !== 0) continue;
                 }
+
                 removeX.push(x);
                 removeY.push(y);
             }
         }
+
         for (let i = 0; i < removeX.length; i++) setMatrixPixel(pixels, removeX[i], removeY[i], 0);
         return removeX.length > 0;
     }
@@ -303,25 +343,6 @@ namespace chinesePixel {
         return (row & (1 << (SOURCE_GLYPH_SIZE - 1 - x))) !== 0;
     }
 
-    function fillBlockRect(origin: Position, direction: CompassDirection, block: number, x0: number, y0: number, x1: number, y1: number): void {
-        let fromPosition: Position;
-        let toPosition: Position;
-        if (direction === CompassDirection.North) {
-            fromPosition = world(origin.getValue(Axis.X), origin.getValue(Axis.Y) + y0, origin.getValue(Axis.Z) - x0);
-            toPosition = world(origin.getValue(Axis.X), origin.getValue(Axis.Y) + y1, origin.getValue(Axis.Z) - x1);
-        } else if (direction === CompassDirection.East) {
-            fromPosition = world(origin.getValue(Axis.X) + x0, origin.getValue(Axis.Y) + y0, origin.getValue(Axis.Z));
-            toPosition = world(origin.getValue(Axis.X) + x1, origin.getValue(Axis.Y) + y1, origin.getValue(Axis.Z));
-        } else if (direction === CompassDirection.South) {
-            fromPosition = world(origin.getValue(Axis.X), origin.getValue(Axis.Y) + y0, origin.getValue(Axis.Z) + x0);
-            toPosition = world(origin.getValue(Axis.X), origin.getValue(Axis.Y) + y1, origin.getValue(Axis.Z) + x1);
-        } else {
-            fromPosition = world(origin.getValue(Axis.X) - x0, origin.getValue(Axis.Y) + y0, origin.getValue(Axis.Z));
-            toPosition = world(origin.getValue(Axis.X) - x1, origin.getValue(Axis.Y) + y1, origin.getValue(Axis.Z));
-        }
-        blocks.fill(block, fromPosition, toPosition, FillOperation.Replace);
-    }
-
     function createMatrix(width: number, height: number): number[][] {
         const matrix: number[][] = [];
         for (let y = 0; y < height; y++) {
@@ -347,6 +368,7 @@ namespace chinesePixel {
     function splitLines(text: string): string[] {
         const result: string[] = [];
         let current = "";
+
         for (let i = 0; i < text.length; i++) {
             const character = text.charAt(i);
             if (character === "\n") {
@@ -356,6 +378,7 @@ namespace chinesePixel {
                 current += character;
             }
         }
+
         result.push(current);
         return result;
     }
