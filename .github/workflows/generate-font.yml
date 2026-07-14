@@ -1,4 +1,4 @@
-name: Generate thin font data
+name: Generate Traditional Chinese font data
 
 on:
   push:
@@ -37,10 +37,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add Minecraft_Chinese_Pixel/font-data-*.ts
+          git add Minecraft_Chinese_Pixel/font-data-*.ts Minecraft_Chinese_Pixel/main.ts
           if git diff --cached --quiet; then
             echo "No generated changes"
           else
-            git commit -m "Regenerate thin Chinese pixel font data"
+            git commit -m "Regenerate improved Traditional Chinese stroke data"
             git push
           fi
